@@ -1,0 +1,121 @@
+server {
+
+        listen 80 default_server;
+        listen [::]:80 default_server;
+        listen 443 ssl default_server;
+        listen [::]:443 ssl default_server;
+        root /usr/share/nginx/html/jpmsb.sj.ifsc.edu.br;
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name jpmsb.sj.ifsc.edu.br;
+        ssl_certificate /etc/ssl/cert.pem;
+        ssl_certificate_key /etc/ssl/key.pem;
+
+        error_page 502 /502.html;
+
+        if ($scheme = http) {
+            return 301 https://$server_name$request_uri;
+        }
+
+        proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+
+        location /502.html {
+            root /usr/share/nginx/html;
+        }
+
+        location /favicon.ico {
+            root /usr/share/nginx/html;
+        }
+
+        location / {
+            proxy_set_header   Host   $host;
+            proxy_set_header   X-Real-IP  $remote_addr;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_pass   http://10.10.10.112:80/;
+            proxy_redirect  http://10.10.10.112:80   https://jpmsb.sj.ifsc.edu.br;
+        }
+
+        location /http-bind {
+            proxy_pass  http://10.10.10.111:5280/http-bind;
+            proxy_set_header Host $host;
+            proxy_buffering off;
+            tcp_nodelay on;
+        }
+
+        location /admin {
+            proxy_pass  http://10.10.10.111:5280/admin;
+            proxy_set_header Host $host;
+            proxy_buffering off;
+            tcp_nodelay on;
+        }
+
+        location /status {
+            proxy_pass  http://10.10.10.111:5280/status;
+            proxy_set_header Host $host;
+            proxy_buffering off;
+            tcp_nodelay on;
+        }
+
+        location /motioneye/ {
+            proxy_pass http://10.10.10.113:8765/;
+            proxy_read_timeout 120s;
+            access_log off;
+        }
+
+        location /cam1 {
+            proxy_pass http://10.10.10.113:7001;
+        }
+
+        location /cam2 {
+            proxy_pass http://10.10.10.113:7002; 
+        }
+
+        location /cam3 {
+            proxy_pass http://10.10.10.113:7003; 
+        }
+
+        location /cam4 {
+            proxy_pass http://10.10.10.113:7004; 
+        }
+
+        location /cam5 {
+            proxy_pass http://10.10.10.113:7005; 
+        }
+
+        location /cam6 {
+            proxy_pass http://10.10.10.113:7006; 
+        }
+
+        location /blog/ {
+            proxy_buffering on;
+            proxy_buffers 12 12k;
+            proxy_redirect off;
+
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_pass http://10.10.10.114:80/blog/;
+        }
+
+        location /wiki/ {
+            #proxy_set_header   Host   $host;
+            #proxy_set_header   X-Real-IP  $remote_addr;
+            proxy_pass http://10.10.10.115:80/wiki/;
+        }
+
+        location /phpldapadmin {
+            proxy_set_header   Host   $host;
+            proxy_set_header   X-Real-IP  $remote_addr;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            auth_basic "Identifique-se";
+            auth_basic_user_file                  /etc/nginx/.phpldapadmin;
+            proxy_pass http://10.10.10.5:80/phpldapadmin;
+        }
+}
